@@ -11,7 +11,7 @@ app.use(middlewareLogResponses);
 app.use(rootPath, middlewareMetricsInc, express.static(staticPath));
 
 app.get("/admin/metrics", handlerRequestHitCount);
-app.get("/admin/reset", handlerRequestHitCountReset);
+app.post("/admin/reset", handlerRequestHitCountReset);
 
 app.get("/api/healthz", handlerReadiness);
 

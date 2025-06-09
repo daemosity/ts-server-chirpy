@@ -7,8 +7,8 @@ const staticPath = "./src/app";
 app.use(middlewareLogResponses);
 app.use(rootPath, middlewareMetricsInc, express.static(staticPath));
 app.get("/admin/metrics", handlerRequestHitCount);
+app.post("/admin/reset", handlerRequestHitCountReset);
 app.get("/api/healthz", handlerReadiness);
-app.get("/api/reset", handlerRequestHitCountReset);
 app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}/app/`);
 });
