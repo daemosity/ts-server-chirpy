@@ -5,6 +5,7 @@ const app = express();
 const PORT = 8080;
 const rootPath = "/app";
 const staticPath = "./src/app";
+app.use(express.json());
 app.use(middlewareLogResponses);
 // /app route
 app.use(rootPath, middlewareMetricsInc, express.static(staticPath));
@@ -35,32 +36,18 @@ async function handlerRequestHitCountReset(_, res) {
     res.send("Reset Confirmed");
 }
 async function handlerValidateChirp(req, res) {
-    let body = "";
-    req.on("data", (chunk) => {
-        body += chunk;
-    });
-    req.on("end", () => {
-        try {
-            console.log(body);
-            const parsedBody = JSON.parse(body);
-            if (!isChirp(parsedBody)) {
-                res.status(400).json({ "error": "Invalid JSON" });
-            }
-            else {
-                if (parsedBody.body.length > 140) {
-                    res.status(400).json({ "error": "Chirp is too long" });
-                }
-                else {
-                    res.status(200).json({ "valid": true });
-                }
-            }
+    const params = req.body;
+    if (!isChirp(params)) {
+        res.status(400).json({ "error": "Invalid JSON" });
+    }
+    else {
+        if (params.body.length > 140) {
+            res.status(400).json({ "error": "Chirp is too long" });
         }
-        catch (err) {
-            if (err instanceof Error) {
-                res.status(400).json({ "error": "Something went wrong" });
-            }
+        else {
+            res.status(200).json({ "valid": true });
         }
-    });
+    }
 }
 // Middleware
 function middlewareLogResponses(req, res, next) {

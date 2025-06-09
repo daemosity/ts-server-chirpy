@@ -1,6 +1,6 @@
 import express, {NextFunction, Request, Response} from "express";
 import { config } from "./config.js";
-import { isChirp } from "./chirp.js";
+import { Chirp, isChirp } from "./chirp.js";
 import { connected } from "process";
 
 const app = express();
@@ -8,6 +8,7 @@ const PORT = 8080;
 const rootPath = "/app";
 const staticPath = "./src/app";
 
+app.use(express.json());
 app.use(middlewareLogResponses);
 
 // /app route
@@ -45,32 +46,16 @@ async function handlerRequestHitCountReset(_: Request, res: Response) {
 }
 
 async function handlerValidateChirp(req: Request, res: Response) {
-    let body = "";
-    
-    req.on("data", (chunk) => {
-        body += chunk;
-    });
-
-
-    req.on("end", () => {
-        try {
-            console.log(body);
-            const parsedBody = JSON.parse(body);
-            if (!isChirp(parsedBody)) {
-                res.status(400).json({"error": "Invalid JSON"});
-            } else {
-                if (parsedBody.body.length > 140) {
-                    res.status(400).json({"error": "Chirp is too long"});
-                } else {
-                    res.status(200).json({"valid": true});
-                }
-            }
-        } catch (err) {
-            if (err instanceof Error) {
-                res.status(400).json({"error": "Something went wrong"});
-            }
+    const params = req.body;
+    if (!isChirp(params)) {
+        res.status(400).json({"error": "Invalid JSON"});
+    } else {
+        if (params.body.length > 140) {
+            res.status(400).json({"error": "Chirp is too long"});
+        } else {
+            res.status(200).json({"valid": true});
         }
-    })
+    }
 }
 
 // Middleware
