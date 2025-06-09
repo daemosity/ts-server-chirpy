@@ -17,39 +17,60 @@ app.post("/admin/reset", handlerRequestHitCountReset);
 app.get("/api/healthz", handlerReadiness);
 app.post("/api/validate_chirp", handlerValidateChirp);
 // Request handlers
-async function handlerReadiness(_, res) {
-    res.set('Content-Type', 'text/plain; charset=utf-8');
-    res.send("OK");
+async function handlerReadiness(_, res, next) {
+    try {
+        res.set('Content-Type', 'text/plain; charset=utf-8');
+        res.send("OK");
+    }
+    catch (err) {
+        next(err);
+    }
 }
 ;
-async function handlerRequestHitCount(_, res) {
-    res.set('Content-Type', 'text/html; charset=utf-8');
-    res.send(`<html>
-                <body>
-                    <h1>Welcome, Chirpy Admin</h1>
-                    <p>Chirpy has been visited ${config.fileserverHits} times!</p>
-                </body>
-            </html>`);
+async function handlerRequestHitCount(_, res, next) {
+    try {
+        res.set('Content-Type', 'text/html; charset=utf-8');
+        res.send(`<html>
+                    <body>
+                        <h1>Welcome, Chirpy Admin</h1>
+                        <p>Chirpy has been visited ${config.fileserverHits} times!</p>
+                    </body>
+                </html>`);
+    }
+    catch (err) {
+        next(err);
+    }
 }
-async function handlerRequestHitCountReset(_, res) {
-    config.fileserverHits = 0;
-    res.set('Content-Type', 'text/plain; charset=utf-8');
-    res.send("Reset Confirmed");
+async function handlerRequestHitCountReset(_, res, next) {
+    try {
+        config.fileserverHits = 0;
+        res.set('Content-Type', 'text/plain; charset=utf-8');
+        res.send("Reset Confirmed");
+    }
+    catch (err) {
+        next(err);
+    }
 }
-async function handlerValidateChirp(req, res) {
-    const params = req.body;
-    if (isChirp(params)) {
-        const chirp = params.body;
-        if (chirp.length > 140) {
-            res.status(400).json({ "error": "Chirp is too long" });
+async function handlerValidateChirp(req, res, next) {
+    try {
+        const params = req.body;
+        if (isChirp(params)) {
+            const chirp = params.body;
+            if (chirp.length > 140) {
+                throw new Error("Chirp is too long");
+                // res.status(400).json({"error": "Chirp is too long"});
+            }
+            else {
+                const cleanedChirp = cleanFilth(chirp);
+                res.status(200).json({ "cleanedBody": cleanedChirp });
+            }
         }
         else {
-            const cleanedChirp = cleanFilth(chirp);
-            res.status(200).json({ "cleanedBody": cleanedChirp });
+            res.status(400).json({ "error": "Invalid JSON" });
         }
     }
-    else {
-        res.status(400).json({ "error": "Invalid JSON" });
+    catch (err) {
+        next(err);
     }
 }
 // Middleware
@@ -66,6 +87,13 @@ function middlewareMetricsInc(req, res, next) {
     config.fileserverHits += 1;
     next();
 }
+function errorHandlerMiddleware(err, req, res, next) {
+    console.error(err.message);
+    res.status(500).json({
+        "error": "Something went wrong on our end",
+    });
+}
+app.use(errorHandlerMiddleware);
 // run server
 app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}/app/`);
