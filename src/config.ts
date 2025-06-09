@@ -5,5 +5,3 @@ type APIConfig = {
 export const config: APIConfig = {
     fileserverHits: 0
 };
-
-export {}
