@@ -2,6 +2,7 @@ import express, {NextFunction, Request, Response} from "express";
 import { config } from "./config.js";
 import { Chirp, isChirp } from "./chirp.js";
 import { connected } from "process";
+import { cleanFilth } from "./filteredWords.js";
 
 const app = express();
 const PORT = 8080;
@@ -47,14 +48,17 @@ async function handlerRequestHitCountReset(_: Request, res: Response) {
 
 async function handlerValidateChirp(req: Request, res: Response) {
     const params = req.body;
-    if (!isChirp(params)) {
-        res.status(400).json({"error": "Invalid JSON"});
-    } else {
-        if (params.body.length > 140) {
+    if (isChirp(params)) {
+        const chirp = params.body;
+        if (chirp.length > 140) {
             res.status(400).json({"error": "Chirp is too long"});
         } else {
-            res.status(200).json({"valid": true});
+            const cleanedChirp = cleanFilth(chirp);
+            res.status(200).json({"cleanedBody": cleanedChirp });
         }
+
+    } else {
+        res.status(400).json({"error": "Invalid JSON"});
     }
 }
 

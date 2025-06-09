@@ -1,6 +1,7 @@
 import express from "express";
 import { config } from "./config.js";
 import { isChirp } from "./chirp.js";
+import { cleanFilth } from "./filteredWords.js";
 const app = express();
 const PORT = 8080;
 const rootPath = "/app";
@@ -37,16 +38,18 @@ async function handlerRequestHitCountReset(_, res) {
 }
 async function handlerValidateChirp(req, res) {
     const params = req.body;
-    if (!isChirp(params)) {
-        res.status(400).json({ "error": "Invalid JSON" });
-    }
-    else {
-        if (params.body.length > 140) {
+    if (isChirp(params)) {
+        const chirp = params.body;
+        if (chirp.length > 140) {
             res.status(400).json({ "error": "Chirp is too long" });
         }
         else {
-            res.status(200).json({ "valid": true });
+            const cleanedChirp = cleanFilth(chirp);
+            res.status(200).json({ "cleanedBody": cleanedChirp });
         }
+    }
+    else {
+        res.status(400).json({ "error": "Invalid JSON" });
     }
 }
 // Middleware
