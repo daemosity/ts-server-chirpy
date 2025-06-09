@@ -10,9 +10,10 @@ app.use(middlewareLogResponses);
 
 app.use(rootPath, middlewareMetricsInc, express.static(staticPath));
 
-app.get("/healthz", handlerReadiness);
-app.get("/metrics", handlerRequestHitCount);
-app.get("/reset", handlerRequestHitCountReset);
+app.get("/admin/metrics", handlerRequestHitCount);
+app.get("/admin/reset", handlerRequestHitCountReset);
+
+app.get("/api/healthz", handlerReadiness);
 
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}/app/`);
@@ -24,8 +25,13 @@ async function handlerReadiness(_: Request, res: Response): Promise<void> {
 };
 
 async function handlerRequestHitCount(_: Request, res: Response) {
-    res.set('Content-Type', 'text/plain; charset=utf-8');
-    res.send(`Hits: ${config.fileserverHits}`)
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.send(`<html>
+                <body>
+                    <h1>Welcome, Chirpy Admin</h1>
+                    <p>Chirpy has been visited ${config.fileserverHits} times!</p>
+                </body>
+              </html>`)
 }
 
 async function handlerRequestHitCountReset(_: Request, res: Response) {
