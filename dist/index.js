@@ -2,6 +2,7 @@ import express from "express";
 import { config } from "./config.js";
 import { isChirp } from "./chirp.js";
 import { cleanFilth } from "./filteredWords.js";
+import { BadRequestError, ForbiddenError, NotFoundError, UnauthorizedError } from "./errors.js";
 const app = express();
 const PORT = 8080;
 const rootPath = "/app";
@@ -57,8 +58,7 @@ async function handlerValidateChirp(req, res, next) {
         if (isChirp(params)) {
             const chirp = params.body;
             if (chirp.length > 140) {
-                throw new Error("Chirp is too long");
-                // res.status(400).json({"error": "Chirp is too long"});
+                throw new BadRequestError("Chirp is too long. Max length is 140");
             }
             else {
                 const cleanedChirp = cleanFilth(chirp);
@@ -66,7 +66,7 @@ async function handlerValidateChirp(req, res, next) {
             }
         }
         else {
-            res.status(400).json({ "error": "Invalid JSON" });
+            throw new BadRequestError("Invalid JSON");
         }
     }
     catch (err) {
@@ -88,10 +88,27 @@ function middlewareMetricsInc(req, res, next) {
     next();
 }
 function errorHandlerMiddleware(err, req, res, next) {
-    console.error(err.message);
-    res.status(500).json({
-        "error": "Something went wrong on our end",
-    });
+    switch (true) {
+        case err instanceof BadRequestError:
+            res.status(400).json({ "error": err.message });
+            console.error(`400: ${err.message}`);
+            break;
+        case err instanceof UnauthorizedError:
+            res.status(401).json({ "error": err.message });
+            console.error(`401: ${err.message}`);
+            break;
+        case err instanceof ForbiddenError:
+            res.status(403).json({ "error": err.message });
+            console.error(`403: ${err.message}`);
+            break;
+        case err instanceof NotFoundError:
+            res.status(404).json({ "error": err.message });
+            console.error(`404: ${err.message}`);
+            break;
+        default:
+            res.status(500).json({ "error": "An unknown error occurred" });
+            console.error(`500: An unknown error occurred`);
+    }
 }
 app.use(errorHandlerMiddleware);
 // run server

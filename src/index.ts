@@ -3,6 +3,7 @@ import { config } from "./config.js";
 import { Chirp, isChirp } from "./chirp.js";
 import { connected, nextTick } from "process";
 import { cleanFilth } from "./filteredWords.js";
+import { BadRequestError, ForbiddenError, NotFoundError, UnauthorizedError } from "./errors.js";
 
 const app = express();
 const PORT = 8080;
@@ -64,15 +65,14 @@ async function handlerValidateChirp(req: Request, res: Response, next: NextFunct
         if (isChirp(params)) {
             const chirp = params.body;
             if (chirp.length > 140) {
-                throw new Error("Chirp is too long");
-                // res.status(400).json({"error": "Chirp is too long"});
+                throw new BadRequestError("Chirp is too long. Max length is 140");
             } else {
                 const cleanedChirp = cleanFilth(chirp);
                 res.status(200).json({"cleanedBody": cleanedChirp });
             }
     
         } else {
-            res.status(400).json({"error": "Invalid JSON"});
+            throw new BadRequestError("Invalid JSON");
         }
     } catch (err) {
         next(err);
@@ -101,10 +101,27 @@ function errorHandlerMiddleware(
     res: Response,
     next: NextFunction,
 ) {
-    console.error(err.message);
-    res.status(500).json({
-        "error": "Something went wrong on our end",
-    });
+    switch(true) {
+        case err instanceof BadRequestError:
+            res.status(400).json({"error": err.message});
+            console.error(`400: ${err.message}`);
+            break;
+        case err instanceof UnauthorizedError:
+            res.status(401).json({"error": err.message});
+            console.error(`401: ${err.message}`);
+            break;
+        case err instanceof ForbiddenError:
+            res.status(403).json({"error": err.message});
+            console.error(`403: ${err.message}`);
+            break;
+        case err instanceof NotFoundError:
+            res.status(404).json({"error": err.message});
+            console.error(`404: ${err.message}`);
+            break;
+        default:
+            res.status(500).json({"error": "An unknown error occurred"});
+            console.error(`500: An unknown error occurred`);
+    }
 }
 
 app.use(errorHandlerMiddleware);
