@@ -7,7 +7,7 @@ import { handlerRequestHitCountReset } from "./routers/admin/metrics.js";
 import { handlerReadiness } from "./routers/api/healthz.js";
 import { handlerRequestHitCount } from "./routers/admin/metrics.js";
 import { handlerCreateUser } from "./routers/api/users.js";
-import { handlerCreateChirp } from "./routers/api/chirps.js";
+import { handlerCreateChirp, handlerGetChirps } from "./routers/api/chirps.js";
 
 const app = express();
 export const config = getConfig();
@@ -29,6 +29,7 @@ app.post("/admin/reset", handlerRequestHitCountReset);
 app.get("/api/healthz", handlerReadiness);
 app.post("/api/users", handlerCreateUser);
 app.post("/api/chirps", handlerCreateChirp);
+app.get("/api/chirps", handlerGetChirps);
 
 
 app.use(errorHandlerMiddleware);

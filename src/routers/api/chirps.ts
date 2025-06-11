@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { cleanFilth } from "../../filteredWords.js";
 import { BadRequestError } from "../../types/errors.js";
 import { NewChirp } from "../../db/schema.js";
-import { createChirp } from "../../db/queries/chirps.js";
+import { createChirp, getChirps } from "../../db/queries/chirps.js";
 
 
 export async function handlerCreateChirp(req: Request, res: Response, next: NextFunction) {
@@ -12,6 +12,16 @@ export async function handlerCreateChirp(req: Request, res: Response, next: Next
         const cleanedChirp = cleanFilth(body);
         const newChirp = await createChirp(cleanedChirp, userId);
         res.status(201).json(newChirp);
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+export async function handlerGetChirps(_: Request, res: Response, next: NextFunction) {
+    try {
+        const chirps = await getChirps();
+        res.status(200).json(chirps);
 
     } catch (err) {
         next(err);
