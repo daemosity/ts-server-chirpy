@@ -15,6 +15,13 @@
       "when": 1749605273115,
       "tag": "0001_tense_lake",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1749610722036,
+      "tag": "0002_unusual_moondragon",
+      "breakpoints": true
     }
   ]
 }

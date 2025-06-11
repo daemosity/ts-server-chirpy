@@ -8,6 +8,7 @@ import { handlerReadiness } from "./routers/api/healthz.js";
 import { handlerRequestHitCount } from "./routers/admin/metrics.js";
 import { handlerCreateUser } from "./routers/api/users.js";
 import { handlerCreateChirp, handlerGetChirpById, handlerGetChirps } from "./routers/api/chirps.js";
+import { handlerLogin } from "./routers/api/login.js";
 
 const app = express();
 export const config = getConfig();
@@ -28,6 +29,7 @@ app.post("/admin/reset", handlerRequestHitCountReset);
 // /api path routes
 app.get("/api/healthz", handlerReadiness);
 app.post("/api/users", handlerCreateUser);
+app.post("/api/login", handlerLogin);
 app.post("/api/chirps", handlerCreateChirp);
 app.get("/api/chirps", handlerGetChirps);
 app.get("/api/chirps/:chirpID", handlerGetChirpById);
