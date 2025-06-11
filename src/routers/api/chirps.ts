@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { cleanFilth } from "../../filteredWords.js";
-import { BadRequestError } from "../../types/errors.js";
+import { BadRequestError, NotFoundError } from "../../types/errors.js";
 import { NewChirp } from "../../db/schema.js";
-import { createChirp, getChirps } from "../../db/queries/chirps.js";
+import { createChirp, getChirpById, getChirps } from "../../db/queries/chirps.js";
 
 
 export async function handlerCreateChirp(req: Request, res: Response, next: NextFunction) {
@@ -22,6 +22,21 @@ export async function handlerGetChirps(_: Request, res: Response, next: NextFunc
     try {
         const chirps = await getChirps();
         res.status(200).json(chirps);
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+export async function handlerGetChirpById(req: Request, res: Response, next: NextFunction) {
+    try {
+        const {chirpID} = req.params;
+        if (!chirpID) {
+            throw new NotFoundError("no matching chirp found")
+        }
+        
+        const chirp = await getChirpById(chirpID);
+        res.status(200).json(chirp);
 
     } catch (err) {
         next(err);
@@ -57,4 +72,4 @@ function validateChirp(params: any): NewChirp {
         default:
             return params
     }
-}
+};
