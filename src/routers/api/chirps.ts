@@ -3,11 +3,17 @@ import { cleanFilth } from "../../filteredWords.js";
 import { BadRequestError, NotFoundError } from "../../types/errors.js";
 import { NewChirp } from "../../db/schema.js";
 import { createChirp, getChirpById, getChirps } from "../../db/queries/chirps.js";
+import { getBearerToken, validateJWT } from "../../auth.js";
+import { getConfig } from "../../config.js";
 
 
 export async function handlerCreateChirp(req: Request, res: Response, next: NextFunction) {
+    const {serverSecret} = getConfig();
     try {
-        const {body, userId} = validateChirp(req.body);
+        const token = getBearerToken(req);
+        const userId = validateJWT(token, serverSecret);
+        const {body} = validateChirp(req.body);
+        console.log(body)
 
         const cleanedChirp = cleanFilth(body);
         const newChirp = await createChirp(cleanedChirp, userId);
@@ -51,11 +57,6 @@ function isChirp(chirp: any): chirp is NewChirp {
         (
             typeof chirp.body === 'string' ||
             chirp.body instanceof String
-        ) &&
-        'userId' in chirp &&
-        (
-            typeof chirp.userId === 'string' ||
-            chirp.userId instanceof String
         )
     );
 };

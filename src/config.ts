@@ -10,6 +10,7 @@ type DBConfig = {
 type APIConfig = {
   fileserverHits: number;
   platform: string;
+  serverSecret: string;
   db: DBConfig;
 };
 
@@ -29,10 +30,12 @@ export const migrationConfig: MigrationConfig = {
 export function getConfig(): APIConfig {
   const dbURL = envOrThrow("DB_URL");
   const platform = envOrThrow("PLATFORM");
+  const secret = envOrThrow("SERVER_SECRET")
   
   return {
     fileserverHits: 0,
     platform: platform,
+    serverSecret: secret,
     db: {
       url: dbURL,
       migrationConfig: migrationConfig

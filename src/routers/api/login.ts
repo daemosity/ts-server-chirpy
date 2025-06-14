@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { getUserByEmail } from "../../db/queries/users.js";
 import { BadRequestError, UnauthorizedError } from "../../types/errors.js";
-import { checkPasswordHash, hasEmailAndPassword } from "../../auth.js";
+import { checkPasswordHash, hasEmailAndPassword, makeJWT } from "../../auth.js";
+import { getConfig } from "../../config.js";
 
 
 export async function handlerLogin(req: Request, res: Response, next: NextFunction) {
@@ -11,7 +12,7 @@ export async function handlerLogin(req: Request, res: Response, next: NextFuncti
             throw new BadRequestError("Error: email field required");
         }
 
-        const { email, password } = body;
+        const { email, password, expiresInSeconds } = body;
         const {hashedPassword, ...safeUserInfo} = await getUserByEmail(email);
 
         if (!safeUserInfo) {
@@ -23,9 +24,25 @@ export async function handlerLogin(req: Request, res: Response, next: NextFuncti
             throw new UnauthorizedError("Error: incorrect password")
         }
 
-        res.status(200).json(safeUserInfo);
+        const token = createToken(safeUserInfo.id, expiresInSeconds);
+        const returnJSON = {...safeUserInfo, token};
+
+        res.status(200).json(returnJSON);
 
     } catch (err) {
         next(err);
     }
 };
+
+function createToken(userId: string, expiresIn: number | undefined): string {
+    const { serverSecret } = getConfig()
+    const hourExpiration = 60 * 60;
+
+    const expiration = (
+        (!expiresIn || expiresIn > hourExpiration) ? 
+        hourExpiration 
+        : expiresIn
+    );
+
+    return makeJWT(userId, expiration, serverSecret);
+}
