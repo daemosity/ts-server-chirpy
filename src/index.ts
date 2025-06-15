@@ -7,7 +7,7 @@ import { handlerRequestHitCountReset } from "./routers/admin/metrics.js";
 import { handlerReadiness } from "./routers/api/healthz.js";
 import { handlerRequestHitCount } from "./routers/admin/metrics.js";
 import { handlerCreateUser, handlerUpdateUser } from "./routers/api/users.js";
-import { handlerCreateChirp, handlerGetChirpById, handlerGetChirps } from "./routers/api/chirps.js";
+import { handlerCreateChirp, handlerDeleteChirp, handlerGetChirpById, handlerGetChirps } from "./routers/api/chirps.js";
 import { handlerLogin } from "./routers/api/login.js";
 import { handlerRefresh } from "./routers/api/refresh.js";
 import { handlerRevoke } from "./routers/api/revoke.js";
@@ -33,18 +33,15 @@ app.post("/admin/reset", handlerRequestHitCountReset);
 
 // /api path routes
 app.get("/api/healthz", handlerReadiness);
-app.post(
-  "/api/users", handlerCreateUser
-).put(
-  "/api/users",
-  handlerUpdateUser
-);
+app.post("/api/users", handlerCreateUser);
+app.put("/api/users", handlerUpdateUser);
 app.post("/api/login", handlerLogin);
 app.post("/api/refresh", handlerRefresh);
 app.post("/api/revoke", handlerRevoke);
 app.post("/api/chirps", handlerCreateChirp);
 app.get("/api/chirps", handlerGetChirps);
 app.get("/api/chirps/:chirpID", handlerGetChirpById);
+app.delete("/api/chirps/:chirpID", handlerDeleteChirp);
 
 
 app.use(errorHandlerMiddleware);

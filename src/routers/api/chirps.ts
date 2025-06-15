@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { cleanFilth } from "../../filteredWords.js";
-import { BadRequestError, NotFoundError } from "../../types/errors.js";
+import { BadRequestError, ForbiddenError, NotFoundError, UnauthorizedError } from "../../types/errors.js";
 import { NewChirp } from "../../db/schema.js";
-import { createChirp, getChirpById, getChirps } from "../../db/queries/chirps.js";
+import { createChirp, deleteChirp, getChirpById, getChirps } from "../../db/queries/chirps.js";
 import { getBearerToken, validateJWT } from "../../auth.js";
 import { getConfig } from "../../config.js";
 
@@ -17,6 +17,29 @@ export async function handlerCreateChirp(req: Request, res: Response, next: Next
         const cleanedChirp = await cleanFilth(body);
         const newChirp = await createChirp(cleanedChirp, userId);
         res.status(201).json(newChirp);
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+export async function handlerDeleteChirp(req: Request, res: Response, next: NextFunction) {
+    const {serverSecret} = await getConfig();
+    try {
+        const token = await getBearerToken(req);
+        const userId = await validateJWT(token, serverSecret);
+        const chirpId = req.params.chirpID;
+        const chirp = await getChirpById(chirpId);
+        if (!chirp) {
+            throw new NotFoundError("Chirp not found");
+        }
+        if (chirp.userId !== userId) {
+            throw new ForbiddenError("Unauthorized: request denied");
+        }
+
+        const deletedChirp = await deleteChirp(chirpId);
+        
+        res.status(204).end();
 
     } catch (err) {
         next(err);
@@ -41,6 +64,9 @@ export async function handlerGetChirpById(req: Request, res: Response, next: Nex
         }
         
         const chirp = await getChirpById(chirpID);
+        if (!chirp) {
+            throw new NotFoundError("no matching chirp found");
+        }
         res.status(200).json(chirp);
 
     } catch (err) {
