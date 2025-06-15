@@ -6,7 +6,7 @@ import { middlewareMetricsInc } from "./middleware/metrics.js";
 import { handlerRequestHitCountReset } from "./routers/admin/metrics.js";
 import { handlerReadiness } from "./routers/api/healthz.js";
 import { handlerRequestHitCount } from "./routers/admin/metrics.js";
-import { handlerCreateUser, handlerUpdateUser } from "./routers/api/users.js";
+import { handlerCreateUser, handlerUpdateUser, handlerUpgradeToRed } from "./routers/api/users.js";
 import { handlerCreateChirp, handlerDeleteChirp, handlerGetChirpById, handlerGetChirps } from "./routers/api/chirps.js";
 import { handlerLogin } from "./routers/api/login.js";
 import { handlerRefresh } from "./routers/api/refresh.js";
@@ -42,6 +42,7 @@ app.post("/api/chirps", handlerCreateChirp);
 app.get("/api/chirps", handlerGetChirps);
 app.get("/api/chirps/:chirpID", handlerGetChirpById);
 app.delete("/api/chirps/:chirpID", handlerDeleteChirp);
+app.post("/api/polka/webhooks", handlerUpgradeToRed);
 
 
 app.use(errorHandlerMiddleware);

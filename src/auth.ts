@@ -93,3 +93,12 @@ export async function createToken(userId: string): Promise<string> {
 
     return await makeJWT(userId, hourExpiration, serverSecret);
 }
+
+export async function getAPIKey(req: Request) {
+    const auth = await req.get("Authorization");
+    if (!auth || !auth.includes("ApiKey")) {
+        throw new UnauthorizedError("Error: No api key found or incorrect authorization format");
+    }
+
+    return auth.split(" ")[1];
+}

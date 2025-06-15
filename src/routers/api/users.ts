@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import { createUser, updateUser } from "../../db/queries/users.js";
-import { BadRequestError, UnauthorizedError, ValidationError } from "../../types/errors.js";
-import { getBearerToken, hasEmailAndPassword, hashPassword, validateJWT } from "../../auth.js";
+import { createUser, updateUser, updateUserToRedByUserId } from "../../db/queries/users.js";
+import { BadRequestError, NotFoundError, UnauthorizedError, ValidationError } from "../../types/errors.js";
+import { getAPIKey, getBearerToken, hasEmailAndPassword, hashPassword, validateJWT } from "../../auth.js";
 import { getConfig } from "../../config.js";
 
 export async function handlerCreateUser(req: Request, res: Response, next: NextFunction) {
@@ -59,3 +59,44 @@ export async function handlerUpdateUser(req: Request, res: Response, next: NextF
         next(err);
     }
 };
+
+export async function handlerUpgradeToRed(req: Request, res: Response, next: NextFunction) {
+    const config = getConfig();
+    try {
+        const apiKey = await getAPIKey(req);
+        if (apiKey !== config.polkaKey) {
+            throw new UnauthorizedError("Unauthorized: incorrect api key");
+        }
+
+        const {body} = req;
+        if (!body || !await validateRedUpgradeRequest(body)) {
+            throw new BadRequestError("Request does not have required form");
+        }
+        if (body.event !== "user.upgraded") {
+            res.status(204).end();
+        }
+        const result = await updateUserToRedByUserId(body.data.userId);
+        if (!result) {
+            throw new NotFoundError("User not found");
+        }
+        res.status(204).end();
+        
+    } catch (err) {
+        next(err);
+    }
+};
+
+function validateRedUpgradeRequest(body: any): body is {"event": string, "data": {"userId": string}} {
+    return (
+        body &&
+        "event" in body &&
+        body["event"] &&
+        typeof body["event"] === "string" &&
+        "data" in body &&
+        body['data'] &&
+        typeof body['data'] === "object" &&
+        "userId" in body['data'] &&
+        body['data']['userId'] &&
+        typeof body['data']['userId'] === "string"
+    )
+}

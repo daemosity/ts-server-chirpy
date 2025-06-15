@@ -34,6 +34,17 @@ export async function updateUser(userId:string, email: string, password: string)
   return result;
 }
 
+export async function updateUserToRedByUserId(userId:string): Promise<UserInfo> {
+  const [result] = await db
+    .update(users)
+    .set({
+      isChirpyRed: true
+    })
+    .where(eq(users.id, userId))
+    .returning();
+  return result;
+}
+
 export async function deleteAllUsers() {
     await db.delete(users);
     console.log(`table users TRUNCATED`)
