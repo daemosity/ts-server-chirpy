@@ -2,6 +2,8 @@ import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { UnauthorizedError } from "./types/errors.js";
 import { Request } from "express";
+import crypto from "crypto";
+import { getConfig } from "./config.js";
 
 process.loadEnvFile(".env")
 
@@ -46,19 +48,19 @@ export function hasEmailAndPassword(body: any): body is { email: string; passwor
 };
 
 type payload = Pick<JwtPayload, "iss" | "sub" | "iat" | "exp" >
-export function makeJWT(userID: string, expiresIn: number, secret: string): string {
+export async function makeJWT(userID: string, expiresIn: number, secret: string): Promise<string> {
     const iss = "chirpy";
     const sub = userID;
     const iat = Math.floor(Date.now() / 1000);
     const exp = iat + expiresIn;
     const payload: payload = { iss, sub, iat, exp }
-    return jwt.sign(payload, secret);
+    return await jwt.sign(payload, secret);
 };
 
-export function validateJWT(tokenString: string, secret: string): string {
+export async function validateJWT(tokenString: string, secret: string): Promise<string> {
     let decodedString;
     try {
-        decodedString = jwt.verify(tokenString, secret);
+        decodedString = await jwt.verify(tokenString, secret);
     } catch (err) {
         if (err instanceof Error ) {
             throw new UnauthorizedError("Unauthorized user");
@@ -72,11 +74,22 @@ export function validateJWT(tokenString: string, secret: string): string {
     return decodedString.sub;
 }
 
-export function getBearerToken(req: Request): string {
-    const auth = req.get("Authorization");
+export async function getBearerToken(req: Request): Promise<string> {
+    const auth = await req.get("Authorization");
     if (!auth || !auth.includes("Bearer")) {
         throw new UnauthorizedError("Error: No token found or incorrect authorization format");
     }
 
     return auth.split(" ")[1];
+};
+
+export async function makeRefreshToken() {
+    const randData = await crypto.randomBytes(32);
+    return randData.toString("hex");
+};
+export async function createToken(userId: string): Promise<string> {
+    const { serverSecret } = await getConfig();
+    const hourExpiration = 60 * 60;
+
+    return await makeJWT(userId, hourExpiration, serverSecret);
 }

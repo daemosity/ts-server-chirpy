@@ -10,23 +10,24 @@ export function errorHandlerMiddleware(
     const { message } = err;
     switch (true) {
         case err instanceof BadRequestError:
-            res.status(400).json({ "error": message });
+            res.status(400).json({ "error": message }).end();
             console.error(`400: ${message}`);
             break;
         case err instanceof UnauthorizedError:
-            res.status(401).json({ "error": message });
+            res.status(401).json({ "error": message }).end();
             console.error(`401: ${message}`);
             break;
         case err instanceof ForbiddenError:
-            res.status(403).json({ "error": message });
+            res.status(403).json({ "error": message }).end();
             console.error(`403: ${message}`);
             break;
         case err instanceof NotFoundError:
-            res.status(404).json({ "error": message });
+            res.status(404).json({ "error": message }).end();
             console.error(`404: ${message}`);
             break;
         default:
-            res.status(500).json({ "error": "An unknown error occurred" });
+            console.error(err.stack || err)
+            res.status(500).json({ "error": "An unknown error occurred" }).end();
             console.error(`500: An unknown error occurred`);
     }
 }

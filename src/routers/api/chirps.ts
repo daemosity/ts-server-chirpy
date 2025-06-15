@@ -8,14 +8,13 @@ import { getConfig } from "../../config.js";
 
 
 export async function handlerCreateChirp(req: Request, res: Response, next: NextFunction) {
-    const {serverSecret} = getConfig();
+    const {serverSecret} = await getConfig();
     try {
-        const token = getBearerToken(req);
-        const userId = validateJWT(token, serverSecret);
-        const {body} = validateChirp(req.body);
-        console.log(body)
+        const token = await getBearerToken(req);
+        const userId = await validateJWT(token, serverSecret);
+        const {body} = await validateChirp(req.body);
 
-        const cleanedChirp = cleanFilth(body);
+        const cleanedChirp = await cleanFilth(body);
         const newChirp = await createChirp(cleanedChirp, userId);
         res.status(201).json(newChirp);
 
@@ -64,7 +63,6 @@ function isChirp(chirp: any): chirp is NewChirp {
 function validateChirp(params: any): NewChirp {
     switch (true) {
         case !isChirp(params):
-            console.log("not chirp")
             throw new BadRequestError("Invalid JSON format");
         case params.body.length === 0:
             throw new BadRequestError("Chirp must have content");

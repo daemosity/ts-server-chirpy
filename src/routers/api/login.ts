@@ -1,18 +1,18 @@
 import { Request, Response, NextFunction } from "express";
 import { getUserByEmail } from "../../db/queries/users.js";
 import { BadRequestError, UnauthorizedError } from "../../types/errors.js";
-import { checkPasswordHash, hasEmailAndPassword, makeJWT } from "../../auth.js";
-import { getConfig } from "../../config.js";
+import { checkPasswordHash, createToken, hasEmailAndPassword, makeRefreshToken } from "../../auth.js";
+import { createRefreshToken } from "../../db/queries/refreshTokens.js";
 
 
 export async function handlerLogin(req: Request, res: Response, next: NextFunction) {
     try {
         const { body } = req;
-        if (!hasEmailAndPassword(body)) {
+        if (! await hasEmailAndPassword(body)) {
             throw new BadRequestError("Error: email field required");
         }
 
-        const { email, password, expiresInSeconds } = body;
+        const { email, password } = body;
         const {hashedPassword, ...safeUserInfo} = await getUserByEmail(email);
 
         if (!safeUserInfo) {
@@ -24,8 +24,11 @@ export async function handlerLogin(req: Request, res: Response, next: NextFuncti
             throw new UnauthorizedError("Error: incorrect password")
         }
 
-        const token = createToken(safeUserInfo.id, expiresInSeconds);
-        const returnJSON = {...safeUserInfo, token};
+        const token = await createToken(safeUserInfo.id);
+        const refreshToken = await makeRefreshToken();
+        await createRefreshToken(refreshToken, safeUserInfo.id);
+        
+        const returnJSON = {...safeUserInfo, token, refreshToken};
 
         res.status(200).json(returnJSON);
 
@@ -34,15 +37,3 @@ export async function handlerLogin(req: Request, res: Response, next: NextFuncti
     }
 };
 
-function createToken(userId: string, expiresIn: number | undefined): string {
-    const { serverSecret } = getConfig()
-    const hourExpiration = 60 * 60;
-
-    const expiration = (
-        (!expiresIn || expiresIn > hourExpiration) ? 
-        hourExpiration 
-        : expiresIn
-    );
-
-    return makeJWT(userId, expiration, serverSecret);
-}

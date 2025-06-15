@@ -22,6 +22,18 @@ export async function getUserByEmail(email: string): Promise<UserInfo> {
   return result;
 }
 
+export async function updateUser(userId:string, email: string, password: string): Promise<UserInfo> {
+  const [result] = await db
+    .update(users)
+    .set({
+      email: email,
+      hashedPassword: password
+    })
+    .where(eq(users.id, userId))
+    .returning();
+  return result;
+}
+
 export async function deleteAllUsers() {
     await db.delete(users);
     console.log(`table users TRUNCATED`)
